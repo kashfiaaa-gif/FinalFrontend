@@ -649,11 +649,15 @@ document.addEventListener(
                 goDashboard
             );
 
-
-        setupMenu();
-
     }
 );
+
+
+/* =========================
+   NAVBAR PROFILE -> profile.html
+   + username display
+========================= */
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const navbarProfile = document.getElementById("navbarProfile");
@@ -665,6 +669,33 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = "profile.html";
 
         });
+
+    }
+
+
+    const navbarUsername = document.getElementById("navbarUsername");
+    const savedUser = localStorage.getItem("user");
+
+    if (navbarUsername && savedUser) {
+
+        try {
+
+            const user = JSON.parse(savedUser);
+
+            const name =
+                user.full_name ||
+                user.username ||
+                user.name ||
+                user.email ||
+                "User";
+
+            navbarUsername.textContent = name;
+
+        } catch (error) {
+
+            console.error("User data error:", error);
+
+        }
 
     }
 

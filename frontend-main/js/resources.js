@@ -1,27 +1,22 @@
-const API =
-    "http://localhost/studyhub/backend/api";
+const API = "http://localhost:3000/api";
 
-const user =
-    JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
 
 
 /* =========================
-   LOAD RESOURCES
+   LOAD RESOURCES (Show All)
 ========================= */
 
 async function loadResources() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API}/resources.php`
-            );
+        const response = await fetch(`${API}/search`);
 
-        const resources =
-            await response.json();
+        const data = await response.json();
 
-        displayResources(resources);
+        displayResources(data.resources);
 
     }
 
@@ -73,12 +68,11 @@ function displayResources(resources) {
 
         const title =
             resource.resource_title ||
-            resource.title ||
             "Untitled Resource";
 
 
         const topic =
-            resource.topic || "";
+            resource.topic_name || "";
 
 
         const type =
@@ -86,9 +80,7 @@ function displayResources(resources) {
 
 
         const url =
-            resource.url ||
-            resource.resource_url ||
-            "#";
+            resource.resource_link || "#";
 
 
         div.innerHTML = `
@@ -160,15 +152,15 @@ async function searchResources() {
 
         const response =
             await fetch(
-                `${API}/resources.php?search=${encodeURIComponent(search)}`
+                `${API}/search?q=${encodeURIComponent(search)}`
             );
 
 
-        const resources =
+        const data =
             await response.json();
 
 
-        displayResources(resources);
+        displayResources(data.resources);
 
     }
 
@@ -193,7 +185,7 @@ async function searchResources() {
 
 async function bookmarkResource(resourceId) {
 
-    if (!user) {
+    if (!user || !token) {
 
         alert(
             "Please login first."
@@ -208,23 +200,19 @@ async function bookmarkResource(resourceId) {
 
         const response =
             await fetch(
-                `${API}/bookmarks.php`,
+                `${API}/bookmarks`,
                 {
 
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
                     },
 
                     body: JSON.stringify({
 
-                        user_id:
-                            user.user_id,
-
-                        resource_id:
-                            resourceId
+                        resourceId: resourceId
 
                     })
 
@@ -289,8 +277,9 @@ function escapeHTML(value) {
    INITIAL LOAD
 ========================= */
 
-loadResources
 document.addEventListener("DOMContentLoaded", function () {
+
+    loadResources();
 
     const navbarProfile = document.getElementById("navbarProfile");
 
@@ -301,6 +290,22 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = "profile.html";
 
         });
+
+    }
+
+
+    const navbarUsername = document.getElementById("navbarUsername");
+
+    if (navbarUsername && user) {
+
+        const name =
+            user.full_name ||
+            user.username ||
+            user.name ||
+            user.email ||
+            "User";
+
+        navbarUsername.textContent = name;
 
     }
 

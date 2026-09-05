@@ -1,18 +1,16 @@
 console.log("NoEtra Admin JS Loaded");
 
 /* =========================================================
-   SHOW ONLY THE RELEVANT SECTION WHEN ARRIVING VIA HASH
+   SHOW ONLY THE RELEVANT SECTION BASED ON THE URL HASH
    e.g. admin.html#section-users only shows the users card.
    No hash at all (visiting admin.html directly) shows everything.
+   Runs on page load AND whenever the hash changes (sidebar clicks
+   while already on admin.html don't reload the page).
 ========================================================= */
 
-(function () {
+function showSectionFromHash() {
 
     const hash = window.location.hash.replace("#", "");
-
-    if (!hash) {
-        return;
-    }
 
     const allSectionIds = [
         "section-resources",
@@ -23,6 +21,16 @@ console.log("NoEtra Admin JS Loaded");
         "section-create-quiz",
         "section-create-question"
     ];
+
+    if (!hash) {
+        allSectionIds.forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = "block";
+            }
+        });
+        return;
+    }
 
     allSectionIds.forEach(function (id) {
         const el = document.getElementById(id);
@@ -41,8 +49,11 @@ console.log("NoEtra Admin JS Loaded");
         document.getElementById("loadDiscussionsBtn")?.click();
     }
 
-})();
+}
 
+showSectionFromHash();
+
+window.addEventListener("hashchange", showSectionFromHash);
 /* =========================================================
    GUARD — extra safety even though script.js already
    redirects non-admins away from admin.html

@@ -1,10 +1,68 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    const bookmarkList = document.getElementById("bookmarkList");
+    const bookmarkList =
+        document.getElementById("bookmarkList");
 
-    const API_URL = "http://localhost:5000/api";
+   const API_URL = "http://localhost:3000/api";
 
-    const token = localStorage.getItem("token");
+    const token =
+        localStorage.getItem("token");
+
+
+    /* =====================================================
+       LOGGED-IN USER NAME
+    ===================================================== */
+
+    const navbarUsername =
+        document.getElementById("navbarUsername");
+
+    const savedUser =
+        localStorage.getItem("user");
+
+
+    if (navbarUsername) {
+
+        if (savedUser) {
+
+            try {
+
+                const user =
+                    JSON.parse(savedUser);
+
+
+                const name =
+                    user.full_name ||
+                    user.username ||
+                    user.name ||
+                    user.email ||
+                    "User";
+
+
+                navbarUsername.textContent =
+                    name;
+
+
+            } catch (error) {
+
+                console.error(
+                    "User data error:",
+                    error
+                );
+
+
+                navbarUsername.textContent =
+                    "User";
+
+            }
+
+        } else {
+
+            navbarUsername.textContent =
+                "User";
+
+        }
+
+    }
 
 
     /* =====================================================
@@ -12,8 +70,13 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     if (!bookmarkList) {
-        console.error("bookmarkList element not found.");
+
+        console.error(
+            "bookmarkList element not found."
+        );
+
         return;
+
     }
 
 
@@ -29,7 +92,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 <span>🔖</span>
 
-                <h2>Please Login First</h2>
+                <h2>
+                    Please Login First
+                </h2>
 
                 <p>
                     You need to login to see your bookmarks.
@@ -38,7 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 <a
                     href="login.html"
                     class="view-resource-btn">
+
                     Go to Login
+
                 </a>
 
             </div>
@@ -46,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
         return;
+
     }
 
 
@@ -64,7 +132,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 <span>🔖</span>
 
-                <h2>Loading Bookmarks...</h2>
+                <h2>
+                    Loading Bookmarks...
+                </h2>
 
                 <p>
                     Please wait while we load your saved resources.
@@ -77,16 +147,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
 
-            const response = await fetch(
-                `${API_URL}/bookmarks`,
-                {
-                    method: "GET",
+            const response =
+                await fetch(
+                    `${API_URL}/bookmarks`,
+                    {
+                        method: "GET",
 
-                    headers: {
-                        "Authorization": `Bearer ${token}`
+                        headers: {
+                            "Authorization":
+                                `Bearer ${token}`
+                        }
                     }
-                }
-            );
+                );
 
 
             console.log(
@@ -100,14 +172,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 const errorText =
                     await response.text();
 
+
                 console.error(
                     "Backend error:",
                     errorText
                 );
 
+
                 throw new Error(
                     `Unable to load bookmarks (${response.status})`
                 );
+
             }
 
 
@@ -142,7 +217,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     : data.bookmarks || [];
 
 
-            displayBookmarks(bookmarks);
+            displayBookmarks(
+                bookmarks
+            );
 
 
         } catch (error) {
@@ -168,7 +245,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     <button
                         type="button"
                         onclick="location.reload()">
+
                         Try Again
+
                     </button>
 
                 </div>
@@ -187,7 +266,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function displayBookmarks(bookmarks) {
 
 
-        /* No bookmarks */
+        /* =========================
+           NO BOOKMARKS
+        ========================= */
 
         if (
             !Array.isArray(bookmarks) ||
@@ -214,7 +295,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a
                         href="resources.html"
                         class="view-resource-btn">
+
                         Explore Resources
+
                     </a>
 
                 </div>
@@ -222,146 +305,171 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
 
             return;
+
         }
 
 
-        /* Clear old content */
+        /* =========================
+           CLEAR OLD CONTENT
+        ========================= */
 
         bookmarkList.innerHTML = "";
 
 
-        /* Create cards */
+        /* =========================
+           CREATE BOOKMARK CARDS
+        ========================= */
 
-        bookmarks.forEach(function (bookmark) {
-
-
-            const card =
-                document.createElement("article");
-
-
-            card.className =
-                "bookmark-card";
+        bookmarks.forEach(
+            function (bookmark) {
 
 
-            /* =========================
-               BACKEND DATA
-            ========================= */
-
-            const bookmarkId =
-                bookmark.bookmark_id ||
-                bookmark.id;
+                const card =
+                    document.createElement(
+                        "article"
+                    );
 
 
-            const title =
-                bookmark.resource_title ||
-                bookmark.title ||
-                "Untitled Resource";
+                card.className =
+                    "bookmark-card";
 
 
-            const type =
-                bookmark.resource_type ||
-                bookmark.type ||
-                "Resource";
+                /* =========================
+                   BACKEND DATA
+                ========================= */
+
+                const bookmarkId =
+                    bookmark.bookmark_id ||
+                    bookmark.id;
 
 
-            const link =
-                bookmark.resource_link ||
-                bookmark.resource_url ||
-                bookmark.url ||
-                "#";
+                const title =
+                    bookmark.resource_title ||
+                    bookmark.title ||
+                    "Untitled Resource";
 
 
-            const description =
-                bookmark.description ||
-                "Saved learning resource.";
+                const type =
+                    bookmark.resource_type ||
+                    bookmark.type ||
+                    "Resource";
 
 
-            const level =
-                bookmark.level ||
-                bookmark.difficulty ||
-                "Learning Resource";
+                const link =
+                    bookmark.resource_link ||
+                    bookmark.resource_url ||
+                    bookmark.url ||
+                    "#";
 
 
-            /* =========================
-               CARD HTML
-            ========================= */
-
-            card.innerHTML = `
-
-                <div class="bookmark-card-top">
-
-                    <span class="bookmark-type">
-                        ${escapeHTML(type)}
-                    </span>
+                const description =
+                    bookmark.description ||
+                    "Saved learning resource.";
 
 
-                    <button
-                        type="button"
-                        class="remove-bookmark-btn"
-                        title="Remove Bookmark">
-
-                        ★
-
-                    </button>
-
-                </div>
+                const level =
+                    bookmark.level ||
+                    bookmark.difficulty ||
+                    "Learning Resource";
 
 
-                <h2>
-                    ${escapeHTML(title)}
-                </h2>
+                /* =========================
+                   CARD HTML
+                ========================= */
+
+                card.innerHTML = `
+
+                    <div class="bookmark-card-top">
+
+                        <span class="bookmark-type">
+
+                            ${escapeHTML(type)}
+
+                        </span>
 
 
-                <p>
-                    ${escapeHTML(description)}
-                </p>
+                        <button
+                            type="button"
+                            class="remove-bookmark-btn"
+                            title="Remove Bookmark">
+
+                            ★
+
+                        </button>
+
+                    </div>
 
 
-                <div class="bookmark-card-bottom">
+                    <h2>
 
-                    <span class="bookmark-level">
-                        ${escapeHTML(level)}
-                    </span>
+                        ${escapeHTML(title)}
 
-
-                    <a
-                        href="${escapeAttribute(link)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="view-resource-btn">
-
-                        View Resource
-
-                    </a>
-
-                </div>
-
-            `;
+                    </h2>
 
 
-            /* =========================
-               REMOVE BUTTON
-            ========================= */
+                    <p>
 
-            const removeButton =
-                card.querySelector(
-                    ".remove-bookmark-btn"
-                );
+                        ${escapeHTML(description)}
+
+                    </p>
 
 
-            removeButton.addEventListener(
-                "click",
-                function () {
+                    <div class="bookmark-card-bottom">
 
-                    removeBookmark(bookmarkId);
+                        <span class="bookmark-level">
+
+                            ${escapeHTML(level)}
+
+                        </span>
+
+
+                        <a
+                            href="${escapeAttribute(link)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="view-resource-btn">
+
+                            View Resource
+
+                        </a>
+
+                    </div>
+
+                `;
+
+
+                /* =========================
+                   REMOVE BUTTON
+                ========================= */
+
+                const removeButton =
+                    card.querySelector(
+                        ".remove-bookmark-btn"
+                    );
+
+
+                if (removeButton) {
+
+                    removeButton.addEventListener(
+                        "click",
+                        function () {
+
+                            removeBookmark(
+                                bookmarkId
+                            );
+
+                        }
+                    );
 
                 }
-            );
 
 
-            bookmarkList.appendChild(card);
+                bookmarkList.appendChild(
+                    card
+                );
 
-        });
+            }
+        );
 
     }
 
@@ -370,7 +478,9 @@ document.addEventListener("DOMContentLoaded", function () {
        REMOVE BOOKMARK
     ===================================================== */
 
-    async function removeBookmark(bookmarkId) {
+    async function removeBookmark(
+        bookmarkId
+    ) {
 
 
         if (!bookmarkId) {
@@ -380,6 +490,7 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
             return;
+
         }
 
 
@@ -390,7 +501,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         if (!confirmRemove) {
+
             return;
+
         }
 
 
@@ -453,7 +566,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function escapeHTML(value) {
 
         const div =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         div.textContent =
@@ -471,27 +586,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function escapeAttribute(value) {
 
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#39;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-
-    }
-
-});
-document.addEventListener("DOMContentLoaded", function () {
-
-    const navbarProfile = document.getElementById("navbarProfile");
-
-    if (navbarProfile) {
-
-        navbarProfile.addEventListener("click", function () {
-
-            window.location.href = "profile.html";
-
-        });
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#39;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            );
 
     }
 

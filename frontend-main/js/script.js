@@ -17,7 +17,6 @@ function getToken() {
 
 
 function getUser() {
-
     const user = localStorage.getItem("user");
 
     if (user) {
@@ -40,7 +39,6 @@ function getUser() {
 
     return null;
 }
-
 
 function authHeaders() {
 
@@ -207,39 +205,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =====================================================
-       DASHBOARD USER NAME
-    ===================================================== */
+   DASHBOARD USER NAME
+===================================================== */
 
-    const userName =
-        document.getElementById("userName");
+const userName =
+    document.getElementById("userName");
 
-    const profileUserName =
-        document.getElementById("profileUserName");
+const profileUserName =
+    document.getElementById("profileUserName");
 
-    const user =
-        getUser();
+const navbarUsername =
+    document.getElementById("navbarUsername");
 
-
-    if (user) {
-
-        const name =
-            user.full_name ||
-            user.username ||
-            user.name ||
-            user.email ||
-            "User";
+const user =
+    getUser();
 
 
-        if (userName) {
-            userName.textContent = name;
-        }
+if (user) {
+
+    const name =
+        user.full_name ||
+        user.username ||
+        user.name ||
+        user.email ||
+        "User";
 
 
-        if (profileUserName) {
-            profileUserName.textContent = name;
-        }
-
+    if (userName) {
+        userName.textContent = name;
     }
+
+
+    if (profileUserName) {
+        profileUserName.textContent = name;
+    }
+
+
+    if (navbarUsername) {
+        navbarUsername.textContent = name;
+    }
+
+}
 
 
     /* =====================================================

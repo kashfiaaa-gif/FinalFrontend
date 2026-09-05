@@ -4105,3 +4105,117 @@ body:has(.side-menu.active) {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
+
+/* =========================================================
+   RESOURCES PAGE — grid layout for #resourceList
+========================================================= */
+
+#resourceList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+
+    width: 90%;
+    max-width: 1100px;
+
+    margin: 0 auto;
+}
+
+#resourceList .resource-card {
+    width: 100%;
+    max-width: none;
+
+    text-align: left;
+}
+
+
+/* =========================================================
+   ADMIN — grid layout for resource/user/discussion lists
+========================================================= */
+
+.admin-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.admin-list-item {
+    margin-bottom: 0; /* grid gap handles spacing now */
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    #resourceList,
+    .admin-list {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+/* =========================================================
+   SEARCH RESULT CARDS - SMALL & CLEAN
+========================================================= */
+
+.search-result-card {
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 18px 22px;
+    border-radius: 14px;
+    box-sizing: border-box;
+}
+
+.search-result-card h2,
+.search-result-card h3 {
+    margin: 0 0 8px;
+}
+
+.search-result-card p {
+    margin: 5px 0 12px;
+}
+
+.search-result-card button,
+.search-result-card a {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* =========================================================
+   ADMIN CARD — expand when it contains a list
+   (fixes resources/users list overflowing the small card)
+========================================================= */
+
+.admin-card:has(.admin-list) {
+    width: 100%;
+    max-width: 900px;
+}
+
+.admin-container:has(.admin-card .admin-list) {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.admin-list {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    margin-top: 20px;
+}
+
+/* =========================================================
+   PROGRESS PAGE — missing CSS variables (fixes invisible
+   white buttons on Progress page)
+========================================================= */
+
+.progress-page {
+    --background: #faf8fc;
+    --text: #1f1730;
+    --muted: #75687c;
+    --card: #ffffff;
+    --border: #e0d5e5;
+    --gold: #4b1f5f;
+    --gold-dark: #351543;
+}
