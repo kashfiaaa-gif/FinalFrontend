@@ -4160,30 +4160,28 @@ body:has(.side-menu.active) {
 /* =========================================================
    SEARCH RESULT CARDS - SMALL & CLEAN
 ========================================================= */
-
 .search-result-card {
-    max-width: 600px;
-    margin: 15px auto;
-    padding: 18px 22px;
+    max-width: 520px;
+    margin: 12px auto;
+    padding: 16px 20px;
     border-radius: 14px;
     box-sizing: border-box;
 }
 
 .search-result-card h2,
 .search-result-card h3 {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
 }
 
 .search-result-card p {
-    margin: 5px 0 12px;
+    margin: 4px 0 10px;
 }
 
 .search-result-card button,
 .search-result-card a {
     display: inline-block;
-    margin-top: 8px;
+    margin-top: 6px;
 }
-
 /* =========================================================
    ADMIN CARD — expand when it contains a list
    (fixes resources/users list overflowing the small card)

@@ -11,8 +11,10 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("roadmapResult");
 
 
-    // Backend API URL
-    const API_URL = "http://localhost:5000/api";
+    // Backend API URL (matches server.js, which runs on port 3000)
+    const API_URL = "http://localhost:3000/api";
+
+    const token = localStorage.getItem("token");
 
 
     // =========================
@@ -45,6 +47,22 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
+            // /api/generate-roadmap requires login
+            if (!token) {
+
+                roadmapMessage.textContent =
+                    "Please login first.";
+
+                roadmapMessage.className = "error";
+
+                setTimeout(function () {
+                    window.location.href = "login.html";
+                }, 800);
+
+                return;
+            }
+
+
             // Loading message
             roadmapMessage.textContent =
                 "Generating roadmap...";
@@ -57,32 +75,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
             try {
 
-                // Get login token
-                const token =
-                    localStorage.getItem("token");
-
-
                 // Backend request
+                // NOTE: this is a GET request, and difficulty/level
+                // isn't filtered server-side — the backend only matches
+                // by topic name (LIKE %topic%) and returns whatever it finds.
                 const response = await fetch(
-                    `${API_URL}/roadmap`,
+                    `${API_URL}/generate-roadmap?topic=${encodeURIComponent(topic)}&level=${encodeURIComponent(level)}`,
                     {
-                        method: "POST",
+                        method: "GET",
 
                         headers: {
-                            "Content-Type": "application/json",
-
-                            ...(token
-                                ? {
-                                    "Authorization":
-                                        `Bearer ${token}`
-                                }
-                                : {})
-                        },
-
-                        body: JSON.stringify({
-                            topic: topic,
-                            level: level
-                        })
+                            "Authorization": `Bearer ${token}`
+                        }
                     }
                 );
 
@@ -98,10 +102,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 );
 
 
+                if (response.status === 401 || response.status === 403) {
+
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+
+                    roadmapMessage.textContent =
+                        "Please login again.";
+
+                    roadmapMessage.className = "error";
+
+                    setTimeout(function () {
+                        window.location.href = "login.html";
+                    }, 800);
+
+                    return;
+                }
+
+
                 if (!response.ok) {
 
                     throw new Error(
-                        data.message ||
                         data.error ||
                         "Failed to generate roadmap."
                     );
@@ -129,6 +150,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 roadmapMessage.textContent =
+                    error.message ||
                     "Backend is not connected yet.";
 
                 roadmapMessage.className =
@@ -146,157 +168,210 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================
     // DISPLAY ROADMAP
     // =========================
+    // Backend (/api/generate-roadmap) always returns a single object:
+    // { result_id, topic_name, roadmap, ai_notes, difficulty, resources: [...] }
 
     function displayRoadmap(data) {
 
-        /*
-            Backend response different format
-            holeo handle korar try korbe.
-        */
+        if (!data || !data.topic_name) {
 
-        const roadmap =
-            data.roadmap ||
-            data.data ||
-            data;
-
-
-        if (!roadmap) {
-
-            roadmapResult.innerHTML = "";
+            roadmapResult.innerHTML =
+                "<p>No roadmap found for this topic yet.</p>";
 
             return;
         }
 
 
-        // If roadmap is an array
-        if (Array.isArray(roadmap)) {
-
-            roadmapResult.innerHTML = "";
+        let resourcesHTML = "";
 
 
-            roadmap.forEach(function (step, index) {
+        if (data.resources && data.resources.length) {
 
-                const card =
-                    document.createElement("div");
+            resourcesHTML = data.resources.map(function (resource) {
 
-                card.className =
-                    "roadmap-result-card";
+                return `
 
+                    <div class="resource-card">
 
-                card.innerHTML = `
+                        <h3>
+                            ${escapeHTML(resource.resource_title)}
+                        </h3>
 
-                    <h3>
-                        Step ${index + 1}
-                    </h3>
+                        <p>
+                            ${escapeHTML(resource.resource_type)}
+                        </p>
 
-                    <p>
-                        ${escapeHTML(
-                            typeof step === "string"
-                                ? step
-                                : step.title ||
-                                  step.name ||
-                                  JSON.stringify(step)
-                        )}
-                    </p>
+                        <a
+                            href="${escapeHTML(resource.resource_link)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Open Resource
+                        </a>
+
+                        <button
+                            onclick="bookmarkResource(${resource.resource_id})"
+                        >
+                            Bookmark
+                        </button>
+
+                    </div>
 
                 `;
 
+            }).join("");
 
-                roadmapResult.appendChild(card);
+        } else {
 
-            });
+            resourcesHTML =
+                "<p>No resources available for this topic yet.</p>";
 
-
-            return;
         }
 
 
-        // If roadmap contains steps
-        if (roadmap.steps &&
-            Array.isArray(roadmap.steps)) {
-
-            roadmapResult.innerHTML = "";
-
-
-            roadmap.steps.forEach(function (step, index) {
-
-                const card =
-                    document.createElement("div");
-
-                card.className =
-                    "roadmap-result-card";
-
-
-                card.innerHTML = `
-
-                    <h3>
-                        Step ${index + 1}
-                    </h3>
-
-                    <h2>
-                        ${escapeHTML(
-                            step.title ||
-                            step.name ||
-                            "Learning Step"
-                        )}
-                    </h2>
-
-                    ${
-                        step.description
-                        ? `
-                            <p>
-                                ${escapeHTML(
-                                    step.description
-                                )}
-                            </p>
-                          `
-                        : ""
-                    }
-
-                `;
-
-
-                roadmapResult.appendChild(card);
-
-            });
-
-
-            return;
-        }
-
-
-        // If backend sends title + description
         roadmapResult.innerHTML = `
 
             <div class="roadmap-result-card">
 
+                <h2>
+                    ${escapeHTML(data.topic_name)}
+                </h2>
+
+                <p>
+                    Difficulty:
+                    <strong>
+                        ${escapeHTML(data.difficulty || "Beginner")}
+                    </strong>
+                </p>
+
                 ${
-                    roadmap.title
-                    ? `
-                        <h2>
-                            ${escapeHTML(
-                                roadmap.title
-                            )}
-                        </h2>
-                      `
+                    data.roadmap
+                    ? `<div>${escapeHTML(data.roadmap)}</div>`
                     : ""
                 }
 
                 ${
-                    roadmap.description
-                    ? `
-                        <p>
-                            ${escapeHTML(
-                                roadmap.description
-                            )}
-                        </p>
-                      `
+                    data.ai_notes
+                    ? `<p>${escapeHTML(data.ai_notes)}</p>`
                     : ""
                 }
+
+                <h3>
+                    Learning Resources
+                </h3>
+
+                <div class="resource-container">
+
+                    ${resourcesHTML}
+
+                </div>
 
             </div>
 
         `;
+
+    }
+
+
+    // =========================
+    // BOOKMARK RESOURCE
+    // =========================
+
+    window.bookmarkResource = async function (resourceId) {
+
+        if (!token) {
+
+            alert("Please login first.");
+
+            window.location.href = "login.html";
+
+            return;
+
+        }
+
+
+        try {
+
+            const response = await fetch(
+                `${API_URL}/bookmarks`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({ resourceId })
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (!response.ok) {
+
+                alert(data.error || "Could not bookmark resource.");
+
+                return;
+
+            }
+
+
+            alert("Resource bookmarked successfully!");
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Could not connect to backend.");
+
+        }
+
+    };
+
+
+    // =========================
+    // NAVBAR: PROFILE LINK + USERNAME
+    // =========================
+
+    const navbarProfile = document.getElementById("navbarProfile");
+
+    if (navbarProfile) {
+
+        navbarProfile.addEventListener("click", function () {
+
+            window.location.href = "profile.html";
+
+        });
+
+    }
+
+
+    const navbarUsername = document.getElementById("navbarUsername");
+    const savedUser = localStorage.getItem("user");
+
+    if (navbarUsername && savedUser) {
+
+        try {
+
+            const user = JSON.parse(savedUser);
+
+            const name =
+                user.full_name ||
+                user.username ||
+                user.name ||
+                user.email ||
+                "User";
+
+            navbarUsername.textContent = name;
+
+        } catch (error) {
+
+            console.error("User data error:", error);
+
+        }
 
     }
 
@@ -314,21 +389,6 @@ document.addEventListener("DOMContentLoaded", function () {
             value ?? "";
 
         return div.innerHTML;
-
-    }
-
-});
-document.addEventListener("DOMContentLoaded", function () {
-
-    const navbarProfile = document.getElementById("navbarProfile");
-
-    if (navbarProfile) {
-
-        navbarProfile.addEventListener("click", function () {
-
-            window.location.href = "profile.html";
-
-        });
 
     }
 

@@ -22,6 +22,16 @@ function showSectionFromHash() {
         "section-create-question"
     ];
 
+    // "Create Content" in the sidebar links to #section-create,
+    // which isn't a single section — it should reveal all four
+    // create-* sections together.
+    const createSectionIds = [
+        "section-create-topic",
+        "section-create-resource",
+        "section-create-quiz",
+        "section-create-question"
+    ];
+
     if (!hash) {
         allSectionIds.forEach(function (id) {
             const el = document.getElementById(id);
@@ -29,6 +39,18 @@ function showSectionFromHash() {
                 el.style.display = "block";
             }
         });
+        return;
+    }
+
+    if (hash === "section-create") {
+
+        allSectionIds.forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = createSectionIds.includes(id) ? "block" : "none";
+            }
+        });
+
         return;
     }
 
@@ -54,6 +76,7 @@ function showSectionFromHash() {
 showSectionFromHash();
 
 window.addEventListener("hashchange", showSectionFromHash);
+
 /* =========================================================
    GUARD — extra safety even though script.js already
    redirects non-admins away from admin.html
@@ -308,15 +331,7 @@ async function loadAllDiscussions() {
 
     try {
 
-        const response = await fetch(`${API}/discussions`, {
-            method: "GET",
-            headers: authHeaders()
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            logout();
-            return;
-        }
+        const response = await fetch(`${API}/community-discussions`);
 
         const discussions = await response.json();
 
@@ -335,9 +350,10 @@ async function loadAllDiscussions() {
             return `
                 <div class="admin-list-item">
                     <p><strong>Topic:</strong> ${escapeHTML(post.topic_name)}</p>
-                    <p><strong>${escapeHTML(post.username)}:</strong> ${escapeHTML(post.message)}</p>
+                    <p><strong>${escapeHTML(post.username)}:</strong> ${escapeHTML(post.title)}</p>
+                    <p>${escapeHTML(post.content)}</p>
                     <p><small>${formatDate(post.created_at)}</small></p>
-                    <button onclick="deleteDiscussionAdmin(${post.post_id})">Delete</button>
+                    <button onclick="deleteDiscussionAdmin(${post.discussion_id})">Delete</button>
                 </div>
             `;
 
@@ -347,6 +363,37 @@ async function loadAllDiscussions() {
 
         console.error(error);
         discussionList.innerHTML = "<p>Could not connect to backend.</p>";
+
+    }
+
+}
+
+async function deleteDiscussionAdmin(discussionId) {
+
+    if (!confirm("Delete this discussion post?")) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(`${API}/community-discussions/${discussionId}`, {
+            method: "DELETE",
+            headers: authHeaders()
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Could not delete post.");
+            return;
+        }
+
+        loadAllDiscussions();
+
+    } catch (error) {
+
+        console.error(error);
+        alert("Could not connect to backend.");
 
     }
 

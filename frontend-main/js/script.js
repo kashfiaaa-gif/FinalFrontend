@@ -465,6 +465,7 @@ if (user) {
     ===================================================== */
 
     applyRoleBasedUI();
+    applyHomeAdminUI();
 
 });
 
@@ -1025,10 +1026,6 @@ function forgotPassword() {
 }
 
 
-/* =========================================================
-   SEARCH
-========================================================= */
-
 async function performSearch() {
 
     const searchInput =
@@ -1036,6 +1033,9 @@ async function performSearch() {
 
     const searchResult =
         document.getElementById("searchResult");
+
+    const resourceContainer =
+        document.getElementById("resourceContainer");
 
 
     if (!searchInput || !searchResult) {
@@ -1078,6 +1078,10 @@ async function performSearch() {
             await response.json();
 
 
+        console.log("SEARCH RESPONSE:", data);
+        console.log("SEARCH STATUS:", response.status);
+
+
         if (!response.ok) {
 
             searchResult.innerHTML = `
@@ -1102,6 +1106,10 @@ async function performSearch() {
         }
 
 
+        /* =====================================================
+           SEARCH RESULT
+        ===================================================== */
+
         let html = "";
 
 
@@ -1110,76 +1118,51 @@ async function performSearch() {
             data.topics.length
         ) {
 
-            data.topics.forEach(function (item) {
+            const uniqueTopics =
+                data.topics.filter(
+                    function (item, index, self) {
 
-                html += `
+                        return index ===
+                            self.findIndex(
+                                function (t) {
 
-                    <div class="search-result-card">
+                                    return t.topic_name?.toLowerCase() ===
+                                        item.topic_name?.toLowerCase();
 
-                        <h2>
-                            ${
-                                escapeHTML(
-                                    item.topic_name
-                                )
-                            }
-                        </h2>
+                                }
+                            );
 
-                        <button
-                            onclick="generateRoadmap(${item.result_id})"
-                        >
-                            View Roadmap
-                        </button>
-
-                    </div>
-
-                `;
-
-            });
-
-        }
+                    }
+                );
 
 
-        if (
-            data.resources &&
-            data.resources.length
-        ) {
+            uniqueTopics.forEach(
+                function (item) {
 
-            data.resources.forEach(function (resource) {
+                    html += `
 
-                html += `
+                        <div class="search-result-card">
 
-                    <div class="search-result-card">
+                            <h2>
+                                ${
+                                    escapeHTML(
+                                        item.topic_name
+                                    )
+                                }
+                            </h2>
 
-                        <h3>
-                            ${
-                                escapeHTML(
-                                    resource.resource_title
-                                )
-                            }
-                        </h3>
+                            <button
+                                onclick="generateRoadmap(${item.result_id})"
+                            >
+                                View Roadmap
+                            </button>
 
-                        <p>
-                            ${
-                                escapeHTML(
-                                    resource.resource_type
-                                )
-                            }
-                        </p>
+                        </div>
 
-                        <a
-                            href="${escapeHTML(
-                                resource.resource_link
-                            )}"
-                            target="_blank"
-                        >
-                            Open Resource
-                        </a>
+                    `;
 
-                    </div>
-
-                `;
-
-            });
+                }
+            );
 
         }
 
@@ -1209,6 +1192,59 @@ async function performSearch() {
             html;
 
 
+        /* =====================================================
+           LEARNING RESOURCES
+        ===================================================== */
+
+        if (
+            resourceContainer &&
+            data.resources &&
+            data.resources.length
+        ) {
+
+            resourceContainer.innerHTML =
+                data.resources.map(
+                    function (resource) {
+
+                        return `
+
+                            <div class="resource-card">
+
+                                <h3>
+                                    ${
+                                        escapeHTML(
+                                            resource.resource_title
+                                        )
+                                    }
+                                </h3>
+
+                                <p>
+                                    ${
+                                        escapeHTML(
+                                            resource.resource_type
+                                        )
+                                    }
+                                </p>
+
+                                <a
+                                    href="${escapeHTML(
+                                        resource.resource_link
+                                    )}"
+                                    target="_blank"
+                                >
+                                    Open Resource
+                                </a>
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
     } catch (error) {
 
         console.error(error);
@@ -1228,193 +1264,12 @@ async function performSearch() {
     }
 
 }
+//Roadmap
+function generateRoadmap(resultId) {
 
-
-/* =========================================================
-   ROADMAP
-========================================================= */
-
-async function generateRoadmap(resultId) {
-
-    const roadmapResult =
-        document.getElementById(
-            "roadmapResult"
-        );
-
-
-    if (!roadmapResult) {
-        return;
-    }
-
-
-    if (!getToken()) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-
-    try {
-
-        const response =
-            await fetch(
-                `${API}/results/${resultId}`,
-                {
-                    method: "GET",
-                    headers: authHeaders()
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            roadmapResult.innerHTML = `
-
-                <div class="search-message">
-
-                    <p>
-                        ${
-                            escapeHTML(
-                                data.error ||
-                                "Roadmap not found."
-                            )
-                        }
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        let resourcesHTML = "";
-
-
-        if (
-            data.resources &&
-            data.resources.length
-        ) {
-
-            resourcesHTML =
-                data.resources.map(function (resource) {
-
-                    return `
-
-                        <div class="resource-card">
-
-                            <h3>
-                                ${
-                                    escapeHTML(
-                                        resource.resource_title
-                                    )
-                                }
-                            </h3>
-
-                            <p>
-                                ${
-                                    escapeHTML(
-                                        resource.resource_type
-                                    )
-                                }
-                            </p>
-
-                            <a
-                                href="${escapeHTML(
-                                    resource.resource_link
-                                )}"
-                                target="_blank"
-                            >
-                                Open Resource
-                            </a>
-
-                            <button
-                                onclick="bookmarkResource(${resource.resource_id})"
-                            >
-                                Bookmark
-                            </button>
-
-                        </div>
-
-                    `;
-
-                }).join("");
-
-        } else {
-
-            resourcesHTML =
-                "<p>No resources available yet.</p>";
-
-        }
-
-
-        roadmapResult.innerHTML = `
-
-            <div class="roadmap-result-card">
-
-                <h2>
-                    ${
-                        escapeHTML(
-                            data.topic_name
-                        )
-                    }
-                </h2>
-
-                <p>
-                    Difficulty:
-                    <strong>
-                        ${
-                            escapeHTML(
-                                data.difficulty ||
-                                "Beginner"
-                            )
-                        }
-                    </strong>
-                </p>
-
-                <div>
-                    ${
-                        escapeHTML(
-                            data.roadmap || ""
-                        )
-                    }
-                </div>
-
-                <h3>
-                    Learning Resources
-                </h3>
-
-                <div class="resource-container">
-
-                    ${resourcesHTML}
-
-                </div>
-
-            </div>
-
-        `;
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        roadmapResult.innerHTML =
-            "<p>Could not connect to backend.</p>";
-
-    }
+    window.location.href = "roadmap.html";
 
 }
-
 
 /* =========================================================
    BOOKMARK
@@ -2110,7 +1965,7 @@ function setupLearningLevels() {
 
 
                 const level =
-                    this.innerText.trim();
+                    this.dataset.level;
 
 
                 let content = "";
@@ -2245,169 +2100,114 @@ function setupLearningLevels() {
    POPULAR TOPICS
 ========================================================= */
 
-function setupPopularTopics() {
+async function setupPopularTopics() {
 
-    const webBtn =
-        document.getElementById("webBtn");
-
-    const mlBtn =
-        document.getElementById("mlBtn");
-
-    const cyberBtn =
-        document.getElementById("cyberBtn");
-
-    const popularResult =
-        document.getElementById(
-            "popularResult"
-        );
+    const popularTopics =
+        document.getElementById("popularTopics");
 
 
-    if (
-        !webBtn ||
-        !mlBtn ||
-        !cyberBtn ||
-        !popularResult
-    ) {
-
+    if (!popularTopics) {
         return;
-
     }
 
 
-    webBtn.addEventListener(
-        "click",
-        function () {
+    try {
 
-            popularResult.innerHTML = `
+        const response =
+            await fetch(`${API}/results`);
 
-                <div class="popular-result-card">
 
-                    <h2>
-                        Web Development Roadmap
-                    </h2>
+        const data =
+            await response.json();
 
-                    <ol>
 
-                        <li>
-                            HTML & CSS
-                        </li>
+        if (!response.ok || !data.length) {
 
-                        <li>
-                            JavaScript
-                        </li>
+            popularTopics.innerHTML = `
 
-                        <li>
-                            Frontend Development
-                        </li>
-
-                        <li>
-                            Backend Development
-                        </li>
-
-                        <li>
-                            Full Stack Projects
-                        </li>
-
-                    </ol>
-
-                </div>
+                <p>
+                    No topics available yet.
+                </p>
 
             `;
 
-        }
-    );
-
-
-    mlBtn.addEventListener(
-        "click",
-        function () {
-
-            popularResult.innerHTML = `
-
-                <div class="popular-result-card">
-
-                    <h2>
-                        Machine Learning Roadmap
-                    </h2>
-
-                    <ol>
-
-                        <li>
-                            Python Basics
-                        </li>
-
-                        <li>
-                            Mathematics for ML
-                        </li>
-
-                        <li>
-                            Data Processing
-                        </li>
-
-                        <li>
-                            Machine Learning Algorithms
-                        </li>
-
-                        <li>
-                            ML Projects
-                        </li>
-
-                    </ol>
-
-                </div>
-
-            `;
+            return;
 
         }
-    );
 
 
-    cyberBtn.addEventListener(
-        "click",
-        function () {
+        /* Shuffle topics randomly */
 
-            popularResult.innerHTML = `
+        const shuffled =
+            data.sort(function () {
 
-                <div class="popular-result-card">
+                return Math.random() - 0.5;
 
-                    <h2>
-                        Cyber Security Roadmap
-                    </h2>
+            });
 
-                    <ol>
 
-                        <li>
-                            Networking Basics
-                        </li>
+        /* Pick 2 or 3 topics */
 
-                        <li>
-                            Operating Systems
-                        </li>
+        const topics =
+            shuffled.slice(
+                0,
+                Math.min(3, shuffled.length)
+            );
 
-                        <li>
-                            Cyber Security Fundamentals
-                        </li>
 
-                        <li>
-                            Network Security
-                        </li>
+        popularTopics.innerHTML =
+            topics.map(function (topic) {
 
-                        <li>
-                            Security Practices
-                        </li>
+                return `
 
-                    </ol>
+                    <div class="card">
 
-                </div>
+                        <h3>
+                            ${
+                                escapeHTML(
+                                    topic.topic_name
+                                )
+                            }
+                        </h3>
 
-            `;
+                        <p>
+                            Difficulty:
+                            ${
+                                escapeHTML(
+                                    topic.difficulty ||
+                                    "Beginner"
+                                )
+                            }
+                        </p>
 
-        }
-    );
+                        <button
+                            onclick="generateRoadmap(${topic.result_id})"
+                        >
+                            View Roadmap
+                        </button>
+
+                    </div>
+
+                `;
+
+            }).join("");
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        popularTopics.innerHTML = `
+
+            <p>
+                Could not load topics.
+            </p>
+
+        `;
+
+    }
 
 }
-
-
 /* =========================================================
    LEARNING RESOURCES
 ========================================================= */
@@ -2480,52 +2280,6 @@ function setupLearningResources() {
 
 }
 
-
-/* =========================================================
-   COMMUNITY - LOCAL STORAGE
-========================================================= */
-
-function getLocalDiscussions() {
-
-    const saved =
-        localStorage.getItem(
-            "noetraDiscussions"
-        );
-
-
-    if (!saved) {
-        return [];
-    }
-
-
-    try {
-
-        const discussions =
-            JSON.parse(saved);
-
-
-        return Array.isArray(discussions)
-            ? discussions
-            : [];
-
-
-    } catch (error) {
-
-        return [];
-
-    }
-
-}
-
-
-function saveLocalDiscussions(discussions) {
-
-    localStorage.setItem(
-        "noetraDiscussions",
-        JSON.stringify(discussions)
-    );
-
-}
 
 
 /* =========================================================
@@ -2764,6 +2518,125 @@ function loadCommunityDiscussions() {
 
 }
 
+/* =========================================================
+   COMMUNITY POST — now saved to the backend, not localStorage
+========================================================= */
+
+async function createCommunityPost(event) {
+
+    event.preventDefault();
+
+    if (!getToken()) {
+        showCommunityMessage("Please login first.", "error");
+        return;
+    }
+
+    const title = document.getElementById("title")?.value.trim();
+    const content = document.getElementById("content")?.value.trim();
+
+    if (!title) {
+        showCommunityMessage("Please enter a discussion title.", "error");
+        return;
+    }
+
+    if (!content) {
+        showCommunityMessage("Please write something in your discussion.", "error");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(`${API}/community-discussions`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({ title, content })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showCommunityMessage(data.error || "Could not post discussion.", "error");
+            return;
+        }
+
+        showCommunityMessage("Discussion posted successfully!", "success");
+
+        event.target.reset();
+
+        loadCommunityDiscussions();
+
+    } catch (error) {
+
+        console.error(error);
+        showCommunityMessage("Could not connect to backend.", "error");
+
+    }
+
+}
+
+
+/* =========================================================
+   LOAD COMMUNITY
+========================================================= */
+
+async function loadCommunityDiscussions() {
+
+    const list = document.getElementById("discussionList");
+
+    if (!list) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(`${API}/community-discussions`);
+        const discussions = await response.json();
+
+        if (!response.ok || !discussions.length) {
+
+            list.innerHTML = `
+                <div class="community-card">
+                    <h3>💬 No discussions yet</h3>
+                    <p>Be the first person to start a discussion!</p>
+                </div>
+            `;
+
+            return;
+
+        }
+
+        list.innerHTML = "";
+
+        discussions.forEach(function (post) {
+
+            const card = document.createElement("div");
+            card.className = "community-card";
+
+            card.innerHTML = `
+                <h3>${escapeHTML(post.title)}</h3>
+                <p>${escapeHTML(post.content)}</p>
+                <small>👤 Posted by: <strong>${escapeHTML(post.username || "User")}</strong></small>
+                <br>
+                <small>🕒 ${formatDate(post.created_at)}</small>
+            `;
+
+            list.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        console.error("Load community error:", error);
+
+        list.innerHTML = `
+            <div class="community-card">
+                <p>Could not connect to backend.</p>
+            </div>
+        `;
+
+    }
+
+}
 
 /* =========================================================
    COMMUNITY MESSAGE
@@ -3678,9 +3551,233 @@ function applyRoleBasedUI() {
 
     }
 
+        // --- Footer: swap "Quick Links" for admin management links ---
+
+    if (isAdmin) {
+
+        const footerSections = document.querySelectorAll(".footer-section");
+
+        footerSections.forEach(function (section) {
+
+            const heading = section.querySelector("h3");
+
+            if (heading && heading.textContent.trim() === "Quick Links") {
+
+                const list = section.querySelector("ul");
+
+                if (list) {
+
+                    list.innerHTML = `
+                        <li><a href="admin.html#section-resources">Manage Resources</a></li>
+                        <li><a href="admin.html#section-users">Manage Users</a></li>
+                        <li><a href="admin.html#section-community">Manage Community</a></li>
+                        <li><a href="admin.html#section-create">Create Content</a></li>
+                    `;
+
+                }
+
+            }
+
+        });
+
+    }
+
 }
 
+/* =========================================================
+   TOP RATED RESOURCES
+========================================================= */
 
+async function setupTopRatedResources() {
+
+    const ratingContainer =
+        document.getElementById("ratingContainer");
+
+
+    if (!ratingContainer) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API}/top-rated-resources`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok || !data.length) {
+
+            ratingContainer.innerHTML = `
+                <p>
+                    Ratings will appear here when resources are available.
+                </p>
+            `;
+
+            return;
+
+        }
+
+
+        ratingContainer.innerHTML =
+            data.map(function (resource) {
+
+                return `
+
+                    <div class="resource-card">
+
+                        <h3>
+                            ${
+                                escapeHTML(
+                                    resource.resource_title
+                                )
+                            }
+                        </h3>
+
+                        <p>
+                            Topic:
+                            ${
+                                escapeHTML(
+                                    resource.topic_name
+                                )
+                            }
+                        </p>
+
+                        <p>
+                            Type:
+                            ${
+                                escapeHTML(
+                                    resource.resource_type
+                                )
+                            }
+                        </p>
+
+                        <p>
+                            ⭐ ${
+                                escapeHTML(
+                                    resource.average_rating
+                                )
+                            }
+                            (
+                            ${
+                                escapeHTML(
+                                    resource.total_ratings
+                                )
+                            }
+                            ratings)
+                        </p>
+
+                        <a
+                            href="${escapeHTML(
+                                resource.resource_link
+                            )}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Open Resource
+                        </a>
+
+                    </div>
+
+                `;
+
+            }).join("");
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        ratingContainer.innerHTML = `
+            <p>
+                Could not load top rated resources.
+            </p>
+        `;
+
+    }
+
+}
+
+/* =========================================================
+   HOME PAGE — ADMIN VIEW
+   Hides the student-facing hero/search section, replaces
+   "Popular Topics" with 3 admin shortcuts, and hides the
+   student-facing "Learning Resources" / "Top Rated
+   Resources" sections, when the logged-in user is an admin.
+========================================================= */
+
+function applyHomeAdminUI() {
+
+    const user = getUser();
+    const isAdmin = !!(user && user.role === "admin");
+
+    if (!isAdmin) {
+        return;
+    }
+
+    const heroSection = document.querySelector(".hero");
+    const popularSection = document.getElementById("popularTopics")?.closest("section");
+    const resourcesSection = document.getElementById("resourceContainer")?.closest("section");
+    const ratingSection = document.getElementById("ratingContainer")?.closest("section");
+
+    // not on index.html — nothing to do
+    if (!popularSection) {
+        return;
+    }
+
+    // hide the student-facing search/level hero entirely
+    if (heroSection) {
+        heroSection.style.display = "none";
+    }
+
+    popularSection.innerHTML = `
+        <h2>Admin Quick Actions</h2>
+        <p class="section-text">Jump straight into managing NoEtra.</p>
+
+        <div class="option-grid">
+
+            <div class="option" data-page="admin.html#section-resources">
+                <span>📚</span>
+                <h3>Manage Resources</h3>
+                <p>Edit or remove learning resources</p>
+            </div>
+
+            <div class="option" data-page="admin.html#section-users">
+                <span>👥</span>
+                <h3>Manage Users</h3>
+                <p>View registered users</p>
+            </div>
+
+            <div class="option" data-page="admin.html#section-community">
+                <span>💬</span>
+                <h3>Manage Community</h3>
+                <p>Moderate discussions</p>
+            </div>
+
+        </div>
+    `;
+
+    popularSection.querySelectorAll(".option").forEach(function (option) {
+        option.addEventListener("click", function () {
+            window.location.href = this.getAttribute("data-page");
+        });
+    });
+
+    // hide the student-facing browsing sections on the admin homepage
+    if (resourcesSection) {
+        resourcesSection.style.display = "none";
+    }
+
+    if (ratingSection) {
+        ratingSection.style.display = "none";
+    }
+
+}
 /* =========================================================
    MAKE FUNCTIONS AVAILABLE TO HTML
 ========================================================= */
@@ -3720,3 +3817,5 @@ window.submitForgotPassword =
 
 window.submitResetPassword =
     submitResetPassword;
+
+setupTopRatedResources();
